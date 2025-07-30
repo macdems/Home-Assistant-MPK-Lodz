@@ -42,14 +42,13 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         print(stop_num)
         lines = stop_cfg.get(CONF_LINES)
         directions = stop_cfg.get(CONF_DIRECTIONS)
-        real_stop_name = MpkLodzSensor.get_stop_name(stop, use_stop_num)
-        if real_stop_name is None:
-            raise Exception(f"Invalid stop id/num: {stop_id} / {stop_num} / {use_stop_num} / {stop}")
-        stop_name = stop_cfg.get(CONF_NAME) or stop_id
         if use_stop_num:
             stop_name = stop_cfg.get(CONF_NAME) or f"num_{stop_num}"
+        else:
+            stop_name = stop_cfg.get(CONF_NAME) or stop_id
         uid = '{}_{}'.format(name, stop_name)
         entity_id = async_generate_entity_id(ENTITY_ID_FORMAT, uid, hass=hass)
+        real_stop_name = MpkLodzSensor.get_stop_name(stop, use_stop_num)
         dev.append(MpkLodzSensor(entity_id, name, stop, use_stop_num, stop_name, real_stop_name, lines, directions))
     add_entities(dev, True)
 
@@ -90,7 +89,7 @@ class MpkLodzSensor(Entity):
     @property
     def extra_state_attributes(self):
         attr = dict()
-        attr['stop_name'] = self._real_stop_name
+        attr['stop_name'] = self._real_stop_name or self._stop_name
         if self._departures is not None:
             attr['list'] = self._departures
             attr['html_timetable'] = self.get_html_timetable()
@@ -108,6 +107,9 @@ class MpkLodzSensor(Entity):
         data = MpkLodzSensor.get_data(self._stop, self._use_stop_num)
         if data is None:
             return
+        real_stop_name = data[0].attrib["name"]
+        if real_stop_name != self._real_stop_name:
+            self._real_stop_name = real_stop_name
         departures = data[0][0]
         parsed_departures = []
         for departure in departures:

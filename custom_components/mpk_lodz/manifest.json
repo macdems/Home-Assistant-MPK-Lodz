@@ -1,11 +1,11 @@
 {
   "domain": "mpk_lodz",
   "name": "MPK Łódź",
-  "documentation": "https://github.com/PiotrMachowski/Home-Assistant-custom-components-MPK-Lodz",
-  "issue_tracker": "https://github.com/PiotrMachowski/Home-Assistant-custom-components-MPK-Lodz/issues",
+  "documentation": "https://github.com/macdems/Home-Assistant-custom-components-MPK-Lodz",
+  "issue_tracker": "https://github.com/macdems/Home-Assistant-custom-components-MPK-Lodz/issues",
   "dependencies": [],
-  "codeowners": ["@PiotrMachowski"],
+  "codeowners": ["@PiotrMachowski", "@macdems"],
   "requirements": ["requests"],
-  "version": "v1.0.2",
+  "version": "v1.0.3",
   "iot_class": "cloud_polling"
 }
