@@ -5,7 +5,9 @@
   "issue_tracker": "https://github.com/macdems/Home-Assistant-MPK-Lodz/issues",
   "dependencies": [],
   "codeowners": ["@PiotrMachowski", "@macdems"],
+  "integration_type": "service",
   "requirements": [],
   "version": "v2.0.0",
+  "config_flow": true,
   "iot_class": "cloud_polling"
 }

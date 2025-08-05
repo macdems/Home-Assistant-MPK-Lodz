@@ -1,0 +1,54 @@
+{
+  "title": "MPK Łódź",
+  "config": {
+    "step": {
+      "user": {
+        "data": {
+          "title": "MPK Łódź",
+          "name": "Name (will be used as a prefix for entities)"
+        }
+      }
+    }
+  },
+  "config_subentries": {
+    "stop": {
+      "entry_type": "Stop",
+      "initiate_flow": {
+        "user": "Add stop",
+        "reconfigure": "Reconfigure stop"
+      },
+      "step": {
+        "user": {
+          "title": "Add stop",
+          "description": "Configure the bus or tram stop.",
+          "data": {
+            "name": "Stop name (optional)",
+            "num": "Stop number",
+            "id": "Stop ID",
+            "lines": "Lines (comma-separated, optional)",
+            "directions": "Directions (comma-separated, optional)"
+          }
+        },
+        "reconfigure": {
+          "title": "Update stop",
+          "description": "Configure the the bus or tram stop",
+          "data": {
+            "name": "Stop name (optional)",
+            "num": "Stop number",
+            "id": "Stop ID",
+            "lines": "Lines (comma-separated, optional)",
+            "directions": "Directions (comma-separated, optional)"
+          }
+        }
+      },
+      "error": {
+        "both_or_neither": "You must set exactly one of stop number or stop ID"
+      },
+      "abort": {
+        "create_entry": "Created configuration for {name}",
+        "reconfigure_successful": "Successfully updated configuration for {name}",
+        "already_configured": "Such stop is already configured"
+      }
+    }
+  }
+}

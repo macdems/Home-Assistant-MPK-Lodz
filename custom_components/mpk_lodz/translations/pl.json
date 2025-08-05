@@ -1,0 +1,54 @@
+{
+    "title": "MPK Łódź",
+    "config": {
+        "step": {
+            "user": {
+                "data": {
+                    "title": "MPK Łódź",
+                    "name": "Nazwa (będzie używana jako prefiks dla encji)"
+                }
+            }
+        }
+    },
+    "config_subentries": {
+        "stop": {
+            "entry_type": "Przystanek",
+            "initiate_flow": {
+                "user": "Dodaj przystanek",
+                "reconfigure": "Skonfiguruj ponownie przystanek"
+            },
+            "step": {
+                "user": {
+                    "title": "Dodaj przystanek",
+                    "description": "Skonfiguruj przystanek autobusowy lub tramwajowy.",
+                    "data": {
+                        "name": "Nazwa przystanku (opcjonalnie)",
+                        "num": "Numer przystanku",
+                        "id": "ID przystanku",
+                        "lines": "Linie (oddzielone przecinkami, opcjonalnie)",
+                        "directions": "Kierunki (oddzielone przecinkami, opcjonalnie)"
+                    }
+                },
+                "reconfigure": {
+                    "title": "Zaktualizuj przystanek",
+                    "description": "Skonfiguruj przystanek autobusowy lub tramwajowy",
+                    "data": {
+                        "name": "Nazwa przystanku (opcjonalnie)",
+                        "num": "Numer przystanku",
+                        "id": "ID przystanku",
+                        "lines": "Linie (oddzielone przecinkami, opcjonalnie)",
+                        "directions": "Kierunki (oddzielone przecinkami, opcjonalnie)"
+                    }
+                }
+            },
+            "error": {
+                "both_or_neither": "Musisz podać albo ID przystanku, albo jego numer"
+            },
+            "abort": {
+                "create_entry": "Utworzono konfigurację dla {name}",
+                "reconfigure_successful": "Pomyślnie zaktualizowano konfigurację dla {name}",
+                "already_configured": "Taki przystanek jest już skonfigurowany"
+            }
+        }
+    }
+}

@@ -4,70 +4,65 @@ from datetime import datetime, timedelta
 
 import aiohttp
 import async_timeout
-import homeassistant.helpers.config_validation as cv
-import voluptuous as vol
-from homeassistant.components.sensor import ENTITY_ID_FORMAT, PLATFORM_SCHEMA
-from homeassistant.const import CONF_ID, CONF_NAME, CONF_URL
+from homeassistant.components.sensor import ENTITY_ID_FORMAT
+from homeassistant.const import CONF_ID, CONF_NAME
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity import Entity, async_generate_entity_id
+from homeassistant.util import slugify
 
-from .consts import CONF_DIRECTIONS, CONF_LINES, CONF_NUM, CONF_STOPS, DEFAULT_NAME
 from . import _LOGGER
-
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME):
-    cv.string,
-    vol.Required(CONF_STOPS):
-    vol.All(
-        cv.ensure_list, [
-            vol.Schema({
-                vol.Optional(CONF_ID, default=0): cv.positive_int,
-                vol.Optional(CONF_NUM, default=0): cv.positive_int,
-                vol.Optional(CONF_NAME): cv.string,
-                vol.Optional(CONF_LINES, default=[]): cv.ensure_list,
-                vol.Optional(CONF_DIRECTIONS, default=[]): cv.ensure_list
-            })
-        ]
-    )
-})
+from .const import CONF_DIRECTIONS, CONF_LINES, CONF_STOPNUM, DEFAULT_NAME, DOMAIN, DEVICE_MANUFACTURER
 
 
-async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
-    name = config.get(CONF_NAME)
-    stops = config.get(CONF_STOPS)
-    dev = []
-    for stop_cfg in stops:
-        stop_id = str(stop_cfg.get(CONF_ID))
-        stop_num = str(stop_cfg.get(CONF_NUM))
+async def async_setup_entry(hass, config_entry, async_add_entities):
+    integration_name = config_entry.data.get(CONF_NAME, DEFAULT_NAME)
+    for stop_subentry in config_entry.subentries.values():
+        stop_data = stop_subentry.data
+        stop_id = str(stop_data.get(CONF_ID))
+        stop_num = str(stop_data.get(CONF_STOPNUM))
         use_stop_num = stop_num != "0"
         stop = stop_num if use_stop_num else stop_id
-        lines = stop_cfg.get(CONF_LINES)
-        directions = stop_cfg.get(CONF_DIRECTIONS)
+        lines = [line for item in stop_data.get(CONF_LINES).split(',') if (line := item.strip())]
+        directions = [dir for item in stop_data.get(CONF_DIRECTIONS).split(',') if (dir := item.strip())]
         if use_stop_num:
-            stop_name = stop_cfg.get(CONF_NAME) or f"num_{stop_num}"
+            stop_name = stop_data.get(CONF_NAME) or f"num_{stop_num}"
         else:
-            stop_name = stop_cfg.get(CONF_NAME) or stop_id
-        uid = '{}_{}'.format(name, stop_name)
-        entity_id = async_generate_entity_id(ENTITY_ID_FORMAT, uid, hass=hass)
-        dev.append(MpkLodzSensor(hass, entity_id, name, stop, use_stop_num, stop_name, lines, directions))
-    async_add_entities(dev, True)
+            stop_name = stop_data.get(CONF_NAME) or stop_id
+        async_add_entities([MpkLodzSensor(hass, integration_name, stop, use_stop_num, stop_name, lines, directions)],
+                           True,
+                           config_subentry_id=stop_subentry.subentry_id)
 
 
 class MpkLodzSensor(Entity):
 
-    def __init__(self, hass, entity_id, name, stop, use_stop_num, stop_name, watched_lines, watched_directions):
+    def __init__(self, hass, integration_name, stop, use_stop_num, stop_name, lines, directions):
+        stop_uid = slugify('{} {}{}'.format(integration_name, "num" if use_stop_num else "", stop))
+        uid = "{}_{}".format(integration_name, stop_name)
+        if lines: uid += "_" + '_'.join(lines)
+        if directions: uid += "_" + '_'.join(directions)
+        entity_id = async_generate_entity_id(ENTITY_ID_FORMAT, uid, hass=hass)
         self.entity_id = entity_id
-        self._name = name
+        self._name = integration_name
         self._stop = stop
         self._use_stop_num = use_stop_num
-        self._watched_lines = watched_lines
-        self._watched_directions = watched_directions
+        self._watched_lines = lines
+        self._watched_directions = directions
         self._stop_name = stop_name
         self._real_stop_name = None
         self._departures = []
         self._departures_number = 0
         self._departures_by_line = dict()
         self._hass = hass
+        self._attr_unique_id = "{}_{}_{}".format(stop_uid, ','.join(lines), ','.join(directions))
+        self._attr_device_info = DeviceInfo(
+            entry_type=DeviceEntryType.SERVICE,
+            identifiers={(DOMAIN, stop_uid)},
+            name=f"{integration_name} - {stop_name}",
+            manufacturer=DEVICE_MANUFACTURER,
+            configuration_url=f"http://rozklady.lodz.pl/Home/TimeTableReal?stopNum={stop}"
+            if use_stop_num else f"http://rozklady.lodz.pl/Home/TimeTableReal?stopId={stop}",
+        )
 
     @property
     def name(self):
@@ -106,7 +101,7 @@ class MpkLodzSensor(Entity):
 
     async def async_update(self):
         now = datetime.now()
-        data = await self.get_data()
+        data = await self.get_data(self._hass, self._stop, self._use_stop_num)
         if data is None:
             return
         self.real_stop_name = data[0].attrib["name"]
@@ -115,8 +110,8 @@ class MpkLodzSensor(Entity):
         for departure in departures:
             line = departure.attrib["nr"]
             direction = departure.attrib["dir"]
-            if len(self._watched_lines) > 0 and line not in self._watched_lines \
-                    or len(self._watched_directions) > 0 and direction not in self._watched_directions:
+            if self._watched_lines and line not in self._watched_lines \
+                    or self._watched_directions and direction not in self._watched_directions:
                 continue
             time_in_seconds = int(departure[0].attrib["s"])
             departure = now + timedelta(seconds=time_in_seconds)
@@ -177,14 +172,19 @@ class MpkLodzSensor(Entity):
             departures_by_line[line][direction].append(departure)
         return departures_by_line
 
-    async def get_data(self):
-        address = "http://rozklady.lodz.pl/Home/GetTimeTableReal?busStopId={}".format(self._stop)
-        if self._use_stop_num:
-            address = "http://rozklady.lodz.pl/Home/GetTimeTableReal?busStopNum={}".format(self._stop)
-        headers = {
-            'referer': address,
-        }
-        session = async_get_clientsession(self._hass)
+    @staticmethod
+    async def get_stop_name(hass, stop, use_stop_num):
+        data = await MpkLodzSensor.get_data(hass, stop, use_stop_num)
+        if data is None:
+            return None
+        return data[0].attrib["name"]
+
+    @staticmethod
+    async def get_data(hass, stop, use_stop_num):
+        address = "http://rozklady.lodz.pl/Home/GetTimeTableReal?busStopId={}".format(stop)
+        if use_stop_num:
+            address = "http://rozklady.lodz.pl/Home/GetTimeTableReal?busStopNum={}".format(stop)
+        session = async_get_clientsession(hass)
         try:
             async with async_timeout.timeout(10):
                 async with session.get(address) as response:
