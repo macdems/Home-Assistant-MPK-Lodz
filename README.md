@@ -17,41 +17,6 @@
 
 This sensor uses unofficial API provided by MPK Łódź.
 
-## Configuration options
-
-| Key     | Type     | Required | Default    | Description                 |
-| ------- | -------- | -------- | ---------- | --------------------------- |
-| `name`  | `string` | `False`  | `MPK Łódź` | Name of sensor              |
-| `stops` | `list`   | `True`   | -          | List of stop configurations |
-|         |          |          |            |                             |
-
-### Stop configuration
-
-| Key          | Type               | Required | Default       | Description                   |
-| ------------ | ------------------ | -------- | ------------- | ----------------------------- |
-| `id`         | `positive integer` | `False`  | -             | ID of a stop                  |
-| `num`        | `positive integer` | `False`  | -             | Number of a stop              |
-| `name`       | `string`           | `False`  | id            | Name of a stop                |
-| `lines`      | `list`             | `False`  | all available | List of monitored lines.      |
-| `directions` | `list`             | `False`  | all available | List of monitored directions. |
-|              |                    |          |               |                               |
-
-One of `id` or `num` must be provided!
-
-## Example usage
-
-```
-sensor:
-  - platform: mpk_lodz
-      stops:
-        - id: 2427
-          lines:
-            - "o97A"          
-        - id: 2873
-          directions:
-            - "DW. ŁÓDŹ KALISKA"
-```
-
 ## Installation
 
 ### Using [HACS](https://hacs.xyz/) (recommended)
@@ -73,29 +38,58 @@ unzip mpk_lodz.zip
 rm mpk_lodz.zip
 ```
 
+## Configuration
+
+* To add the "**MPK Łódź**" integration click this button:
+  
+  [![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=mpk_lodz).
+
+  Alternatively, you may use Settings -> Devices & Services -> Add Integration and select **MPK Łódź** from the list.
+
+* Specify the service name. It will impact the default prefix of your entities.
+
+* In the integration page click **Add stop** and fill in stop details (see below).
+
+
+### Stop configuration
+
+First, you need to get the value of a stop ID or its number. It can be retrieved from [*ITS Łódź*](http://rozklady.lodz.pl/). After choosing a desired stop open its electronical table. There should be a number visibile in URL. If URL contains `busStopId` you should use this number as *Stop ID*. If URL contains `busStopNum` you should use this number as *Stop number*. 
+
+In the stop configuration dialog, you must fill-in exactly one of:
+
+* *Stop ID* — ID of a stop.
+* *Stop number* - stop number.
+
+In addition, you may specify optional parameters.
+
+* *Stop name* — stop name. If omitted, it will be retrieved automatically
+* *Lines* — comma-separated list of monitored lines.
+* *Directions* — comma-separated list of monitored directions.
+
+You may add the same stop multiple times with different monitored lines. This will create multiple entities for monitored stops.
+
 ## Hints
 
-* Value for `id`/`num` can be retrieved from [*ITS Łódź*](http://rozklady.lodz.pl/). After choosing a desired stop open its electronical table. There should be a number visibile in URL. If URL contains `busStopId` you should use this number as `id`. If URL contains `busStopNum` you should use this number as `num`. 
+These sensors provides attributes which can be used in [*HTML card*](https://github.com/PiotrMachowski/Home-Assistant-Lovelace-HTML-card) or [*HTML Template card*](https://github.com/PiotrMachowski/Home-Assistant-Lovelace-HTML-Template-card): `html_timetable`, `html_departures`
 
-* These sensors provides attributes which can be used in [*HTML card*](https://github.com/PiotrMachowski/Home-Assistant-Lovelace-HTML-card) or [*HTML Template card*](https://github.com/PiotrMachowski/Home-Assistant-Lovelace-HTML-Template-card): `html_timetable`, `html_departures`
-  * HTML card:
-    ```yaml
-    - type: custom:html-card
-      title: 'MPK'
-      content: |
-        <big><center>Timetable</center></big>
-        [[ sensor.mpk_lodz_2427.attributes.html_timetable ]]
-        <big><center>Departures</center></big>
-        [[ sensor.mpk_lodz_2873.attributes.html_departures ]]
-    ```
-  * HTML Template card:
-    ```yaml
-    - type: custom:html-template-card
-      title: 'MPK'
-      ignore_line_breaks: true
-      content: |
-        <big><center>Timetable</center></big></br>
-        {{ state_attr('sensor.mpk_lodz_2427','html_timetable') }}
-        </br><big><center>Departures</center></big></br>
-        {{ state_attr('sensor.mpk_lodz_2873','html_departures') }}
-    ```
+* HTML card:
+  ```yaml
+  - type: custom:html-card
+    title: 'MPK'
+    content: |
+      <big><center>Timetable</center></big>
+      [[ sensor.mpk_lodz_2427.attributes.html_timetable ]]
+      <big><center>Departures</center></big>
+      [[ sensor.mpk_lodz_2873.attributes.html_departures ]]
+  ```
+* HTML Template card:
+  ```yaml
+  - type: custom:html-template-card
+    title: 'MPK'
+    ignore_line_breaks: true
+    content: |
+      <big><center>Timetable</center></big></br>
+      {{ state_attr('sensor.mpk_lodz_2427','html_timetable') }}
+      </br><big><center>Departures</center></big></br>
+      {{ state_attr('sensor.mpk_lodz_2873','html_departures') }}
+  ```
