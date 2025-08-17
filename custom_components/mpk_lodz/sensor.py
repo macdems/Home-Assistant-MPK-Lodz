@@ -19,9 +19,9 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     integration_name = config_entry.data.get(CONF_NAME, DEFAULT_NAME)
     for stop_subentry in config_entry.subentries.values():
         stop_data = stop_subentry.data
-        stop_id = str(stop_data.get(CONF_ID))
-        stop_num = str(stop_data.get(CONF_STOPNUM))
-        use_stop_num = stop_num != "0"
+        stop_id = str(stop_data.get(CONF_ID) or "")
+        stop_num = str(stop_data.get(CONF_STOPNUM) or "")
+        use_stop_num = not stop_id
         stop = stop_num if use_stop_num else stop_id
         lines = [line for item in stop_data.get(CONF_LINES).split(',') if (line := item.strip())]
         directions = [dir for item in stop_data.get(CONF_DIRECTIONS).split(',') if (dir := item.strip())]
