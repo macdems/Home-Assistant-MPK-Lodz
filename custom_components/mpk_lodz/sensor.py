@@ -14,6 +14,10 @@ from homeassistant.util import slugify
 from . import _LOGGER
 from .const import CONF_DIRECTIONS, CONF_LINES, CONF_STOPNUM, DEFAULT_NAME, DOMAIN, DEVICE_MANUFACTURER
 
+# Home Assistant will use SCAN_INTERVAL to determine how often to call async_update
+# for polling entities. Set to 30 seconds per user request.
+SCAN_INTERVAL = timedelta(seconds=30)
+
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     integration_name = config_entry.data.get(CONF_NAME, DEFAULT_NAME)
@@ -35,6 +39,8 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 
 class MpkLodzSensor(Entity):
+    icon = "mdi:bus-clock"
+    should_poll = True
 
     def __init__(self, hass, integration_name, stop, use_stop_num, stop_name, lines, directions):
         stop_uid = slugify('{} {}{}'.format(integration_name, "num" if use_stop_num else "", stop))
@@ -67,10 +73,6 @@ class MpkLodzSensor(Entity):
     @property
     def name(self):
         return '{} - {}'.format(self._name, self._stop_name)
-
-    @property
-    def icon(self):
-        return "mdi:bus-clock"
 
     @property
     def state(self):
