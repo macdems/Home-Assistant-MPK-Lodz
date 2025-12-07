@@ -122,7 +122,8 @@ class MpkLodzSensor(Entity):
                 "line": line,
                 "direction": direction,
                 "departure": "{:02}:{:02}".format(departure.hour, departure.minute),
-                "time_to_departure": int(time_to_departure),
+                "time_to_departure": time_to_departure,
+                "seconds_to_departure": time_in_seconds,
             })
         self._departures = parsed_departures
         self._departures_number = len(parsed_departures)
