@@ -14,10 +14,6 @@ from homeassistant.util import slugify
 from . import _LOGGER
 from .const import CONF_DIRECTIONS, CONF_LINES, CONF_STOPNUM, DEFAULT_NAME, DOMAIN, DEVICE_MANUFACTURER
 
-# Home Assistant will use SCAN_INTERVAL to determine how often to call async_update
-# for polling entities. Set to 30 seconds per user request.
-SCAN_INTERVAL = timedelta(seconds=30)
-
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     integration_name = config_entry.data.get(CONF_NAME, DEFAULT_NAME)
@@ -122,8 +118,8 @@ class MpkLodzSensor(Entity):
                 "line": line,
                 "direction": direction,
                 "departure": "{:02}:{:02}".format(departure.hour, departure.minute),
+                "departure_ts": int(departure.timestamp()),
                 "time_to_departure": time_to_departure,
-                "seconds_to_departure": time_in_seconds,
             })
         self._departures = parsed_departures
         self._departures_number = len(parsed_departures)

@@ -7,7 +7,7 @@
   "codeowners": ["@PiotrMachowski", "@macdems"],
   "integration_type": "service",
   "requirements": [],
-  "version": "v2.2.0",
+  "version": "v2.1.0",
   "config_flow": true,
   "iot_class": "cloud_polling"
 }
